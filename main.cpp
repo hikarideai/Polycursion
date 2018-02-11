@@ -58,7 +58,9 @@ struct Timer {
 };
 
 bool save_screenshoot(const char *filename) {
-    TGAImage img(WINDOW_WIDTH, WINDOW_HEIGHT, TGAImage::RGB);
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    TGAImage img(w, h, TGAImage::RGB);
     GLubyte *pixels = (GLubyte *)malloc(TGAImage::RGB * WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(GLubyte));
     glReadPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     for (int y = 0; y < WINDOW_HEIGHT; y++) {
