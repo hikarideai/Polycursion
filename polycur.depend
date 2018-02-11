@@ -1,0 +1,108 @@
+# depslib dependency file v1.0
+1518031630 source:c:\users\supre\documents\polycur\shader.cpp
+	"shader.hpp"
+	<iostream>
+
+1518028505 c:\users\supre\documents\polycur\include\shader.hpp
+	<GL/glew.h>
+	<bits/stdc++.h>
+	<fstream>
+	<sstream>
+
+1469321016 c:\users\supre\documents\polycur\include\gl\glew.h
+	<stddef.h>
+	<inttypes.h>
+	<stdint.h>
+	<inttypes.h>
+	<Availability.h>
+	<OpenGL/glu.h>
+	<GL/glu.h>
+
+1518298362 source:c:\users\supre\documents\polycur\main.cpp
+	<GL/glew.h>
+	"GLFW/glfw3.h"
+	<stdio.h>
+	<random>
+	<ctime>
+	<windows.h>
+	"shader.hpp"
+	"tgaimage.h"
+	"glm/vec3.hpp"
+
+1471519948 c:\users\supre\documents\polycur\include\glfw\glfw3.h
+	<stddef.h>
+	<stdint.h>
+	<OpenGL/gl3.h>
+	<OpenGL/gl3ext.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/glcorearb.h>
+	<GLES/gl.h>
+	<GLES/glext.h>
+	<GLES2/gl2.h>
+	<GLES2/gl2ext.h>
+	<GLES3/gl3.h>
+	<GLES2/gl2ext.h>
+	<GLES3/gl31.h>
+	<GLES2/gl2ext.h>
+	<vulkan/vulkan.h>
+	<GL/gl.h>
+	<GL/glext.h>
+	<GL/glu.h>
+
+1502884120 c:\users\supre\documents\polycur\include\glm\vec3.hpp
+	"detail/type_vec3.hpp"
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\type_vec3.hpp
+	"type_vec.hpp"
+	"_swizzle.hpp"
+	"_swizzle_func.hpp"
+	<cstddef>
+	"type_vec3.inl"
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\type_vec.hpp
+	"precision.hpp"
+	"type_int.hpp"
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\precision.hpp
+	"setup.hpp"
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\setup.hpp
+	<cassert>
+	<cstddef>
+	"../simd/platform.h"
+
+1502884120 c:\users\supre\documents\polycur\include\glm\simd\platform.h
+	<cuda.h>
+	<intrin.h>
+	<immintrin.h>
+	<immintrin.h>
+	<popcntintrin.h>
+	<nmmintrin.h>
+	<smmintrin.h>
+	<tmmintrin.h>
+	<pmmintrin.h>
+	<emmintrin.h>
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\type_int.hpp
+	"setup.hpp"
+	<type_traits>
+	<cstdint>
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\_swizzle.hpp
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\_swizzle_func.hpp
+
+1502884120 c:\users\supre\documents\polycur\include\glm\detail\type_vec3.inl
+
+1518286184 source:c:\users\supre\documents\polycur\tgaimage.cpp
+	<iostream>
+	<fstream>
+	<string.h>
+	<time.h>
+	<math.h>
+	"tgaimage.h"
+
+1518286177 c:\users\supre\documents\polycur\include\tgaimage.h
+	<fstream>
+
