@@ -1,3 +1,7 @@
+[poly]: https://ibb.co/cUqKMS "Polygon preview"
+
+![alt text][poly]
+
 # Polycursion
 ### General
 Polycursion is a neat thingy, which can produce really beautiful patterns.
