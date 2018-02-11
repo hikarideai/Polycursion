@@ -196,7 +196,7 @@ int main() {
     int frames = 0, frames_ps = 0;
     double frame_till = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
-        if (steps >= MAX_STEPS && !fps.tick()){
+        if (steps >= MAX_STEPS && !fps.tick())
             Sleep(fps.left() * 1e3), fps.refresh();
 
         if (input_type == 2 && save_t.tick())
@@ -275,8 +275,10 @@ int main() {
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     if (action == GLFW_PRESS) {
         if (wait_input) {
-                if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9 || GLFW_KEY_) {
+                if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9) {
                     input_str.push_back(key);
+                } else if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9) {
+                    input_str.push_back(key - GLFW_KEY_KP_0 + '0');
                 } else if (!input_str.empty() && key == GLFW_KEY_BACKSPACE) {
                     input_str.pop_back();
                 } else if (key == GLFW_KEY_ENTER) {
