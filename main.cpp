@@ -192,7 +192,6 @@ int main() {
 
     // APP CYCLE
     Timer watch(0.01), fps(1.0/60), sec(1);
-    cout << "SPF = " << fps.delay << endl;
     int frames = 0, frames_ps = 0;
     double frame_till = glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
