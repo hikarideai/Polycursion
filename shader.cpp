@@ -140,6 +140,5 @@ std::string readFile(const GLchar *path) {
     std::ifstream f(path);
     std::stringstream sas;
     sas << f.rdbuf();
-    printf("%s\n", sas.str().c_str());
     return sas.str();
 }
