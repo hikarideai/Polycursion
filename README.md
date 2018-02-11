@@ -20,4 +20,4 @@ and then repeats the same process for a new polygon.
 * To save a beautiful masterpiece to a file use S
 
 ### Dependencies
-This project uses GLEW and GLFW to make OpenGl work and tgaimage (scraped from /ssloy/tinyrenderer) to make screenshots. 
+This project uses GLEW and GLFW to make OpenGl work and LodePNG to make screenshots. 
