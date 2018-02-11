@@ -8,7 +8,7 @@
 #include <windows.h>
 
 #include "shader.hpp"
-#include "tgaimage.h"
+#include "lodepng.h"
 #include "glm/vec3.hpp"
 
 using namespace std;
@@ -57,19 +57,16 @@ struct Timer {
     }
 };
 
-bool save_screenshoot(const char *filename) {
+int save_screenshoot(const char *filename) {
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
-    TGAImage img(w, h, TGAImage::RGB);
-    GLubyte *pixels = (GLubyte *)malloc(TGAImage::RGB * WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(GLubyte));
-    glReadPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    for (int y = 0; y < WINDOW_HEIGHT; y++) {
-        for (int x = 0; x < WINDOW_WIDTH; x++) {
-            img.set(x, y, TGAColor(pixels[3 * (WINDOW_WIDTH*y + x)], pixels[3 * (WINDOW_WIDTH*y + x) + 1], pixels[3 * (WINDOW_WIDTH*y + x) + 2], 255));
-        }
-    }
-    free(pixels);
-    return img.write_tga_file(filename);
+
+    vector<GLubyte> pixels(3 * w * h);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+
+    int error = lodepng::encode(filename, pixels, w, h, LCT_RGB);
+
+    return error;
 }
 
 // Gives you a point from interpolation of a and b coords
@@ -316,11 +313,14 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
                            to_string(date->tm_sec) + " " +
                            to_string(date->tm_mday) + "." +
                            to_string(date->tm_mon + 1) + "." +
-                           to_string(date->tm_year + 1900) + ".tga";
-            if (save_screenshoot(filename.c_str()))
+                           to_string(date->tm_year + 1900) + ".png";
+
+            glfwSetWindowTitle(window, "Saving...");
+            int error = save_screenshoot(filename.c_str());
+            if (!error)
                 input_str = "Saved as " + filename;
             else
-                input_str = "Save filed";
+                input_str = "Save failed: " + (string)lodepng_error_text(error);
             input_type = 2;
             save_t.refresh();
         } else if (key == GLFW_KEY_M) {
