@@ -1,4 +1,4 @@
-[poly]: https://ibb.co/cUqKMS "Polygon preview"
+[poly]: https://image.ibb.co/gLKDgS/23_39_46_10_2_119.png "Polygon preview"
 
 ![alt text][poly]
 
