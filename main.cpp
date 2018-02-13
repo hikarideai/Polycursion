@@ -4,181 +4,83 @@
 #include <stdio.h>
 #include <random>
 #include <ctime>
-
 #include <windows.h>
 
 #include "shader.hpp"
+#include "timer.h"
 #include "lodepng.h"
 #include "glm/vec3.hpp"
+#include "glm/vec2.hpp"
 
 using namespace std;
 
-static const int WINDOW_WIDTH  = 1280,
-				 WINDOW_HEIGHT = 760;
+void genPolygon(int n);
+int save_screenshoot(const char *filename);
+string to_string(double n, int d = 2);
+void updatePoly();
+GLfloat rand(GLfloat a, GLfloat b);
+void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
+void frameBufferSizeCallback(GLFWwindow *, int width, int height);
 
-// Per second
-static const double shift = 2, zoom_add = 2;
+template<class C>
+C lerp(C a, C b, float t) {
+    return a + (b - a) * t;
+}
 
-const double pi = 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066;
+
+static const char *WINDOW_TITLE = "Polycursion";
+static const int WINDOW_WIDTH  = 1280, WINDOW_HEIGHT = 760;
+static const double shift = 2, zoom_add = 2;  // Per second
+const double pi = 3.14159265358979323846264338327950288419716939937510582;
 const int INF = 1e9;
 
 GLFWwindow *window = nullptr;
 default_random_engine generator;
 
-void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
-void frameBufferSizeCallback(GLFWwindow *, int width, int height);
-
-struct point {
-    GLfloat x, y;
-    point() {}
-    point(GLfloat x, GLfloat y) : x(x), y(y) {}
-    friend point operator+(point a, point b) {
-        return point(a.x + b.x, a.y + b.y);
-    }
-};
-
-struct Timer {
-    double passed, delay;
-    Timer() {}
-    Timer(double delay) : passed(glfwGetTime()), delay(delay) {}
-    bool tick() {
-        if (glfwGetTime() - passed >= delay) {
-            passed = glfwGetTime();
-            return true;
-        }
-        return false;
-    }
-    double left() {
-        return delay - (glfwGetTime() - passed);
-    }
-
-    void refresh() {
-        passed = glfwGetTime();
-    }
-};
-
-int save_screenshoot(const char *filename) {
-    int w, h;
-    glfwGetFramebufferSize(window, &w, &h);
-
-    vector<GLubyte> pixels(3 * w * h);
-    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
-
-    int error = lodepng::encode(filename, pixels, w, h, LCT_RGB);
-
-    return error;
-}
-
-// Gives you a point from interpolation of a and b coords
-// t - is interpolation step from [0..1]
-point interpolate(point &a, point &b, double t) {
-    point out;
-    out.x = a.x + (b.x - a.x) * t;
-    out.y = a.y + (b.y - a.y) * t;
-    return out;
-}
-
-glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, double t) {
-    glm::vec3 out;
-    out.x = a.x + (b.x - a.x) * t;
-    out.y = a.y + (b.y - a.y) * t;
-    out.z = a.z + (b.z - a.z) * t;
-    return out;
-}
-
-double dist(point a, point b) {
-    return hypot(b.x - a.x, b.y - a.y);
-}
-
-GLfloat rand(GLfloat a, GLfloat b) {
-    mt19937 g(time(0));
-    uniform_real_distribution<GLfloat> dist(a, b);
-    return dist(generator);
-}
-
-string to_string(double n, int d = 2) {
-    string out;
-    int64_t a = n * pow(10, d);
-    while (a != 0) {
-            out.push_back(a % 10 + '0');
-            d--;
-            if (!d)
-                out.push_back('.');
-            a /= 10;
-    }
-    reverse(out.begin(), out.end());
-    return out;
-}
-
-GLuint vvbo, cvbo, vao;
-vector<point> pts;
+GLuint vvbo, cvbo, vao;  // Vertex VBO, Color VBO
+vector<glm::vec2> pts;   // Vertex data
 vector<glm::vec3> colors;
-int steps = 1, ord = 1, NGON = 22, MAX_STEPS = 1000;
+int steps = 1, MAX_STEPS = 1000;
+int NGON = 22;
 double zoom = 1;
 double shx = 0, shy = 0;
-
-void updatePoly() {
-    glBindBuffer(GL_ARRAY_BUFFER, vvbo);
-    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(point), &pts[0], GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, cvbo);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
 
 Timer save_t(2);
 int input_type;
 bool wait_input = false;
 string input_str;
 
-void genPolygon(int n) {
-    pts.clear();
-    for (int i = 0; i < NGON; i++) {
-        pts.emplace_back(rand(-1, 1), rand(-1, 1));
-    }
-    colors.clear();
-    for (int i = 0; i < NGON; i++) {
-        colors.emplace_back(rand(0, 1), rand(0, 1), rand(0, 1));
-    }
-}
-
 int main() {
-    // INITIALIZATION
+    // CORE INITIALIZATION
     glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Polycursion", 0, 0);
-	if (!window) cerr << "Use ur FOKING GPU pls\n";
+	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, 0, 0);
+	if (!window) cerr << "Use ur FOKING GPU!!!\n";
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) cerr << "GLEW is dead\n";
-/*    glEnable(GL_BLEND);
-    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_REVERSE_SUBTRACT);
-    glBlendFuncSeparate(GL_DST_COLOR, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
-*/
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
     glViewport(0, 0, w, h);
     glfwSetKeyCallback(window, keyCallback);
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 
-    // SHADERS
+    // INIT SHADERS
     ShaderProgram prg;
     prg.loadFromFile("vert", "frag");
 
-    // DATA
+    // INIT DATA
     genPolygon(NGON);
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-
     glGenBuffers(1, &vvbo);
     glGenBuffers(1, &cvbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vvbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pts), &pts[0], GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, cvbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), &colors[0], GL_DYNAMIC_DRAW);
+    updatePoly();
 
+    // INIT VETEX ATTRIBUTES (according to vert)
     glBindBuffer(GL_ARRAY_BUFFER, vvbo);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void *)0);
     glEnableVertexAttribArray(0);
@@ -225,9 +127,9 @@ int main() {
         if (steps < MAX_STEPS) {
             steps++;
             for (int i = 0; i < NGON - 1; i++) {
-                pts.push_back(interpolate(pts[pts.size() - NGON], pts[pts.size() - NGON + 1], rand(0, 1)));
+                pts.push_back(lerp(pts[pts.size() - NGON], pts[pts.size() - NGON + 1], 0.2));
             }
-            pts.push_back(interpolate(pts[pts.size() - NGON], pts[pts.size() - 2 * NGON + 1], rand(0, 1)));
+            pts.push_back(lerp(pts[pts.size() - NGON], pts[pts.size() - 2 * NGON + 1], 0.2));
 
             for (int i = 0; i < NGON; i++)
                 colors.emplace_back(rand(0, 1), rand(0, 1), rand(0, 1));
@@ -268,6 +170,55 @@ int main() {
 
     glfwTerminate();
     return 0;
+}
+
+void genPolygon(int n) {
+    pts.clear();
+    for (int i = 0; i < NGON; i++) {
+        pts.emplace_back(rand(-1, 1), rand(-1, 1));
+    }
+    colors.clear();
+    for (int i = 0; i < NGON; i++) {
+        colors.emplace_back(rand(0, 1), rand(0, 1), rand(0, 1));
+    }
+}
+
+int save_screenshoot(const char *filename) {
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+
+    vector<GLubyte> pixels(3 * w * h);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+
+    return lodepng::encode(filename, pixels, w, h, LCT_RGB);
+}
+
+string to_string(double n, int d) {
+    string out;
+    int64_t a = n * pow(10, d);
+    while (a != 0) {
+            out.push_back(a % 10 + '0');
+            d--;
+            if (!d)
+                out.push_back('.');
+            a /= 10;
+    }
+    reverse(out.begin(), out.end());
+    return out;
+}
+
+void updatePoly() {
+    glBindBuffer(GL_ARRAY_BUFFER, vvbo);
+    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(glm::vec2), &pts[0], GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, cvbo);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+GLfloat rand(GLfloat a, GLfloat b) {
+    mt19937 g(time(0));
+    uniform_real_distribution<GLfloat> dist(a, b);
+    return dist(generator);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
