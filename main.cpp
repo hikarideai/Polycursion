@@ -12,14 +12,12 @@
 #include "glm/vec3.hpp"
 #include "glm/vec2.hpp"
 
-using namespace std;
-
 void handleWindowTitle();
 void handleHoldKeyEvents(double dt);
 void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
 void genPolygon(int n);
 int save_screenshoot(const char *filename);
-string to_string(double n, int d = 2);
+std::string to_string(double n, int d = 2);
 void updatePoly();
 GLfloat rand(GLfloat a, GLfloat b);
 void frameBufferSizeCallback(GLFWwindow *, int width, int height);
@@ -37,11 +35,11 @@ const double pi = 3.14159265358979323846264338327950288419716939937510582;
 const int INF = 1e9;
 
 GLFWwindow *window = nullptr;
-default_random_engine generator;
+std::mt19937 generator(time(0));
 
 GLuint vvbo, cvbo, vao;  // Vertex VBO, Color VBO
-vector<glm::vec2> pts;   // Vertex data
-vector<glm::vec3> colors;
+std::vector<glm::vec2> pts;   // Vertex data
+std::vector<glm::vec3> colors;
 int steps = 1, MAX_STEPS = 1000;
 int NGON = 22;
 double zoom = 1;
@@ -51,7 +49,7 @@ int drawn = 0;
 Timer msg_t(2);
 int input_type;
 bool wait_input = false;
-string input_str;
+std::string input_str;
 enum InputType {
     IT_IDLE, IT_POLYSIDE, IT_MESSAGE, IT_MSTEPS
 };
@@ -64,10 +62,10 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, 0, 0);
-	if (!window) cerr << "Use ur FOKING GPU!!!\n";
+	if (!window) std::cerr << "Use ur FOKING GPU!!!\n";
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) cerr << "GLEW is dead\n";
+    if (glewInit() != GLEW_OK) std::cerr << "GLEW is dead\n";
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
     glViewport(0, 0, w, h);
@@ -137,7 +135,7 @@ int main() {
         prg.setFloat("zoom", zoom);
         prg.setFloat("shx", shx);
         prg.setFloat("shy", shy);
-        for (int i = 0; i < min(MAX_STEPS, steps); i++) {
+        for (int i = 0; i < std::min(MAX_STEPS, steps); i++) {
             glDrawArrays(GL_TRIANGLE_STRIP, i * NGON, NGON);
         }
         glBindVertexArray(0);
@@ -160,9 +158,9 @@ int main() {
 }
 
 void handleWindowTitle() {
-    string title;
+    std::string title;
     if (input_type == IT_IDLE) {
-        title = (string)WINDOW_TITLE + " " + to_string(100 * steps / MAX_STEPS) + "% [" + to_string(drawn) + "fps] | Zoom " + to_string(zoom, 2) + "x | " + to_string(NGON) + "-gon | Depth " + to_string(steps) + "/" + to_string(MAX_STEPS);
+        title = (std::string)WINDOW_TITLE + " " + to_string(100 * steps / MAX_STEPS) + "% [" + to_string(drawn) + "fps] | Zoom " + to_string(zoom, 2) + "x | " + to_string(NGON) + "-gon | Depth " + to_string(steps) + "/" + to_string(MAX_STEPS);
     } else if (input_type == IT_POLYSIDE) {
         title = "Generate " + input_str + "-gon";
     } else if (input_type == IT_MESSAGE) {
@@ -177,7 +175,7 @@ void handleHoldKeyEvents(double dt) {
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
             zoom *= pow(zoom_add, dt);
         } else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-            zoom /= zoom > 1 ? pow(zoom_add, min(dt, log(zoom) / log(zoom_add))) : 1;
+            zoom /= zoom > 1 ? pow(zoom_add, std::min(dt, log(zoom) / log(zoom_add))) : 1;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             shx += dt * shift / zoom;
@@ -228,7 +226,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
         } else if (key == GLFW_KEY_S) {
             time_t now = time(0);
             tm *date = localtime(&now);
-            string filename = to_string(date->tm_hour) + "-" +
+            std::string filename = to_string(date->tm_hour) + "-" +
                            to_string(date->tm_min) + "-" +
                            to_string(date->tm_sec) + " " +
                            to_string(date->tm_mday) + "." +
@@ -240,7 +238,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
             if (!error)
                 input_str = "Saved as " + filename;
             else
-                input_str = "Save failed: " + (string)lodepng_error_text(error);
+                input_str = "Save failed: " + (std::string)lodepng_error_text(error);
             input_type = IT_MESSAGE;
             msg_t.refresh();
         } else if (key == GLFW_KEY_M) {
@@ -266,14 +264,14 @@ int save_screenshoot(const char *filename) {
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
 
-    vector<GLubyte> pixels(3 * w * h);
+    std::vector<GLubyte> pixels(3 * w * h);
     glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 
     return lodepng::encode(filename, pixels, w, h, LCT_RGB);
 }
 
-string to_string(double n, int d) {
-    string out;
+std::string to_string(double n, int d) {
+    std::string out;
     int64_t a = n * pow(10, d);
     while (a != 0) {
             out.push_back(a % 10 + '0');
@@ -295,8 +293,7 @@ void updatePoly() {
 }
 
 GLfloat rand(GLfloat a, GLfloat b) {
-    mt19937 g(time(0));
-    uniform_real_distribution<GLfloat> dist(a, b);
+    std::uniform_real_distribution<GLfloat> dist(a, b);
     return dist(generator);
 }
 
