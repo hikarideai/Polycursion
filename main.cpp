@@ -14,12 +14,14 @@
 
 using namespace std;
 
+void handleWindowTitle();
+void handleHoldKeyEvents(double dt);
+void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
 void genPolygon(int n);
 int save_screenshoot(const char *filename);
 string to_string(double n, int d = 2);
 void updatePoly();
 GLfloat rand(GLfloat a, GLfloat b);
-void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
 void frameBufferSizeCallback(GLFWwindow *, int width, int height);
 
 template<class C>
@@ -44,6 +46,7 @@ int steps = 1, MAX_STEPS = 1000;
 int NGON = 22;
 double zoom = 1;
 double shx = 0, shy = 0;
+int drawn = 0;
 
 Timer save_t(2);
 int input_type;
@@ -92,34 +95,19 @@ int main() {
     glBindVertexArray(0);
 
     // APP CYCLE
-    Timer watch(0.01), fps(1.0/60), sec(1);
-    int frames = 0, frames_ps = 0;
-    double frame_till = glfwGetTime();
+    Timer spf(1.0/60), fps_upd(1), ft;  // Frames management
+    int frames = 0;
     while (!glfwWindowShouldClose(window)) {
-        if (steps >= MAX_STEPS && !fps.tick())
-            Sleep(fps.left() * 1e3), fps.refresh();
+        if (steps >= MAX_STEPS && !spf.tick())
+            Sleep(spf.left() * 1e3), spf.refresh();
 
         if (input_type == 2 && save_t.tick())
             input_type = 0;
 
-        double dt = glfwGetTime() - frame_till;
-        frame_till = glfwGetTime();
+        double dt = ft.elapsed();
+        ft.refresh();
 
-        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-            zoom *= pow(zoom_add, dt);
-        } else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-            zoom /= zoom > 1 ? pow(zoom_add, min(dt, log(zoom) / log(zoom_add))) : 1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            shx += dt * shift / zoom;
-        } else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            shx -= dt * shift / zoom;
-        }
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            shy -= dt * shift / zoom;
-        } else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            shy += dt * shift / zoom;
-        }
+        handleHoldKeyEvents(dt);
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -151,25 +139,108 @@ int main() {
 
         glfwPollEvents();
         glfwSwapBuffers(window);
-        frames++;
 
-        string title;
-        if (input_type == 0) {
-            title = "Polycursion " + to_string(100 * steps / MAX_STEPS) + "% [" + to_string(frames_ps) + "fps] | Zoom " + to_string(zoom, 2) + "x | " + to_string(NGON) + "-gon | Depth " + to_string(steps) + "/" + to_string(MAX_STEPS);
-        } else if (input_type == 1) {
-            title = "Generate " + input_str + "-gon";
-        } else if (input_type == 2) {
-            title = input_str;
-        } else if (input_type == 3) {
-            title = "No. steps to perform = " + input_str;
-        }
-        glfwSetWindowTitle(window, title.c_str());
-        if (sec.tick())
-            frames_ps = frames, frames = 0;
+        handleWindowTitle();
+
+        frames++;
+        if (fps_upd.tick())
+            drawn = frames, frames = 0;
     }
 
     glfwTerminate();
     return 0;
+}
+
+void handleWindowTitle() {
+    string title;
+    if (input_type == 0) {
+        title = (string)WINDOW_TITLE + " " + to_string(100 * steps / MAX_STEPS) + "% [" + to_string(drawn) + "fps] | Zoom " + to_string(zoom, 2) + "x | " + to_string(NGON) + "-gon | Depth " + to_string(steps) + "/" + to_string(MAX_STEPS);
+    } else if (input_type == 1) {
+        title = "Generate " + input_str + "-gon";
+    } else if (input_type == 2) {
+        title = input_str;
+    } else if (input_type == 3) {
+        title = "No. steps to perform = " + input_str;
+    }
+    glfwSetWindowTitle(window, title.c_str());
+}
+
+void handleHoldKeyEvents(double dt) {
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+            zoom *= pow(zoom_add, dt);
+        } else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+            zoom /= zoom > 1 ? pow(zoom_add, min(dt, log(zoom) / log(zoom_add))) : 1;
+        }
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            shx += dt * shift / zoom;
+        } else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            shx -= dt * shift / zoom;
+        }
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            shy -= dt * shift / zoom;
+        } else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            shy += dt * shift / zoom;
+        }
+}
+
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
+    if (action == GLFW_PRESS) {
+        if (wait_input) {
+                if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9) {
+                    input_str.push_back(key);
+                } else if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9) {
+                    input_str.push_back(key - GLFW_KEY_KP_0 + '0');
+                } else if (!input_str.empty() && key == GLFW_KEY_BACKSPACE) {
+                    input_str.pop_back();
+                } else if (key == GLFW_KEY_ENTER) {
+                    if (input_type == 1 && !input_str.empty()) {
+                        NGON = stoi(input_str);
+                        genPolygon(NGON);
+                        steps = 1;
+                    } else if (input_type == 3 && !input_str.empty()) {
+                        MAX_STEPS = stoi(input_str);
+                    }
+                    wait_input = false;
+                    input_type = 0;
+                }
+        } else if (key == GLFW_KEY_C) {
+            glm::vec3 clA(rand(0, 1), rand(0, 1), rand(0, 1)), clB(rand(0, 1), rand(0, 1), rand(0, 1));
+
+            steps = 1;
+            genPolygon(NGON);
+            updatePoly();
+        } else if (key == GLFW_KEY_V) {
+            shx = 0;
+            shy = 0;
+            zoom = 1;
+        } else if (key == GLFW_KEY_N) {
+            input_str.clear();
+            wait_input = true;
+            input_type = 1;
+        } else if (key == GLFW_KEY_S) {
+            time_t now = time(0);
+            tm *date = localtime(&now);
+            string filename = to_string(date->tm_hour) + "-" +
+                           to_string(date->tm_min) + "-" +
+                           to_string(date->tm_sec) + " " +
+                           to_string(date->tm_mday) + "." +
+                           to_string(date->tm_mon + 1) + "." +
+                           to_string(date->tm_year + 1900) + ".png";
+
+            glfwSetWindowTitle(window, "Saving...");
+            int error = save_screenshoot(filename.c_str());
+            if (!error)
+                input_str = "Saved as " + filename;
+            else
+                input_str = "Save failed: " + (string)lodepng_error_text(error);
+            input_type = 2;
+            save_t.refresh();
+        } else if (key == GLFW_KEY_M) {
+            input_str.clear();
+            input_type = 3;
+            wait_input = true;
+        }
+    }
 }
 
 void genPolygon(int n) {
@@ -219,67 +290,6 @@ GLfloat rand(GLfloat a, GLfloat b) {
     mt19937 g(time(0));
     uniform_real_distribution<GLfloat> dist(a, b);
     return dist(generator);
-}
-
-void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode) {
-    if (action == GLFW_PRESS) {
-        if (wait_input) {
-                if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9) {
-                    input_str.push_back(key);
-                } else if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9) {
-                    input_str.push_back(key - GLFW_KEY_KP_0 + '0');
-                } else if (!input_str.empty() && key == GLFW_KEY_BACKSPACE) {
-                    input_str.pop_back();
-                } else if (key == GLFW_KEY_ENTER) {
-                    if (input_type == 1 && !input_str.empty()) {
-                        NGON = stoi(input_str);
-                        genPolygon(NGON);
-                        steps = 1;
-                    } else if (input_type == 3 && !input_str.empty()) {
-                        MAX_STEPS = stoi(input_str);
-                    }
-                    wait_input = false;
-                    input_type = 0;
-                }
-        } else if (key == GLFW_KEY_C) {
-            glm::vec3 clA(rand(0, 1), rand(0, 1), rand(0, 1)), clB(rand(0, 1), rand(0, 1), rand(0, 1));
-
-            puts("!!!RECLEAN!!!");
-            steps = 1;
-            genPolygon(NGON);
-            updatePoly();
-        } else if (key == GLFW_KEY_V) {
-            shx = 0;
-            shy = 0;
-            zoom = 1;
-        } else if (key == GLFW_KEY_N) {
-            input_str.clear();
-            wait_input = true;
-            input_type = 1;
-        } else if (key == GLFW_KEY_S) {
-            time_t now = time(0);
-            tm *date = localtime(&now);
-            string filename = to_string(date->tm_hour) + "-" +
-                           to_string(date->tm_min) + "-" +
-                           to_string(date->tm_sec) + " " +
-                           to_string(date->tm_mday) + "." +
-                           to_string(date->tm_mon + 1) + "." +
-                           to_string(date->tm_year + 1900) + ".png";
-
-            glfwSetWindowTitle(window, "Saving...");
-            int error = save_screenshoot(filename.c_str());
-            if (!error)
-                input_str = "Saved as " + filename;
-            else
-                input_str = "Save failed: " + (string)lodepng_error_text(error);
-            input_type = 2;
-            save_t.refresh();
-        } else if (key == GLFW_KEY_M) {
-            input_str.clear();
-            input_type = 3;
-            wait_input = true;
-        }
-    }
 }
 
 void frameBufferSizeCallback(GLFWwindow *window, int width, int height) {

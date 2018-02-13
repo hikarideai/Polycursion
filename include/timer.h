@@ -2,22 +2,26 @@
 #define TIMER_H_INCLUDED
 
 struct Timer {
-    double passed, delay;
-    Timer() {}
-    Timer(double delay) : passed(glfwGetTime()), delay(delay) {}
+    double last, delay;
+    Timer() : last(glfwGetTime()) {}
+    Timer(double delay) : last(glfwGetTime()), delay(delay) {}
     bool tick() {
-        if (glfwGetTime() - passed >= delay) {
-            passed = glfwGetTime();
+        if (glfwGetTime() - last >= delay) {
+            last = glfwGetTime();
             return true;
         }
         return false;
     }
+    double elapsed() {
+        return glfwGetTime() - last;
+    }
+
     double left() {
-        return delay - (glfwGetTime() - passed);
+        return delay - (glfwGetTime() - last);
     }
 
     void refresh() {
-        passed = glfwGetTime();
+        last = glfwGetTime();
     }
 };
 
