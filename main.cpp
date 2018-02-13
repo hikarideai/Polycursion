@@ -8,8 +8,10 @@
 #include <windows.h>
 
 #include "shader.hpp"
+#include "timer.h"
 #include "lodepng.h"
 #include "glm/vec3.hpp"
+#include "glm/vec2.hpp"
 
 using namespace std;
 
@@ -28,35 +30,6 @@ default_random_engine generator;
 void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
 void frameBufferSizeCallback(GLFWwindow *, int width, int height);
 
-struct point {
-    GLfloat x, y;
-    point() {}
-    point(GLfloat x, GLfloat y) : x(x), y(y) {}
-    friend point operator+(point a, point b) {
-        return point(a.x + b.x, a.y + b.y);
-    }
-};
-
-struct Timer {
-    double passed, delay;
-    Timer() {}
-    Timer(double delay) : passed(glfwGetTime()), delay(delay) {}
-    bool tick() {
-        if (glfwGetTime() - passed >= delay) {
-            passed = glfwGetTime();
-            return true;
-        }
-        return false;
-    }
-    double left() {
-        return delay - (glfwGetTime() - passed);
-    }
-
-    void refresh() {
-        passed = glfwGetTime();
-    }
-};
-
 int save_screenshoot(const char *filename) {
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
@@ -71,8 +44,8 @@ int save_screenshoot(const char *filename) {
 
 // Gives you a point from interpolation of a and b coords
 // t - is interpolation step from [0..1]
-point interpolate(point &a, point &b, double t) {
-    point out;
+glm::vec2 interpolate(glm::vec2 &a, glm::vec2 &b, double t) {
+    glm::vec2 out;
     out.x = a.x + (b.x - a.x) * t;
     out.y = a.y + (b.y - a.y) * t;
     return out;
@@ -86,7 +59,7 @@ glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, double t) {
     return out;
 }
 
-double dist(point a, point b) {
+double dist(glm::vec2 a, glm::vec2 b) {
     return hypot(b.x - a.x, b.y - a.y);
 }
 
@@ -111,7 +84,7 @@ string to_string(double n, int d = 2) {
 }
 
 GLuint vvbo, cvbo, vao;
-vector<point> pts;
+vector<glm::vec2> pts;
 vector<glm::vec3> colors;
 int steps = 1, ord = 1, NGON = 22, MAX_STEPS = 1000;
 double zoom = 1;
@@ -119,7 +92,7 @@ double shx = 0, shy = 0;
 
 void updatePoly() {
     glBindBuffer(GL_ARRAY_BUFFER, vvbo);
-    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(point), &pts[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(glm::vec2), &pts[0], GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, cvbo);
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
