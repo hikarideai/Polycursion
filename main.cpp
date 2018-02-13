@@ -1,10 +1,12 @@
 #include <GL/glew.h>
 #include "GLFW/glfw3.h"
 
-#include <stdio.h>
-#include <random>
-#include <ctime>
+#ifdef LINUX
+#include <unistd.h>
+#endif
+#ifdef WINDOWS
 #include <windows.h>
+#endif
 
 #include "shader.hpp"
 #include "timer.h"
@@ -12,14 +14,19 @@
 #include "glm/vec3.hpp"
 #include "glm/vec2.hpp"
 
+#include <stdio.h>
+#include <random>
+#include <ctime>
+
 void handleWindowTitle();
 void handleHoldKeyEvents(double dt);
 void keyCallback(GLFWwindow *, int key, int scancode, int action, int mode);
 void genPolygon(int n);
 int save_screenshoot(const char *filename);
-std::string to_string(double n, int d = 2);
+std::string to_string(double n, int d = 0);
 void updatePoly();
 GLfloat rand(GLfloat a, GLfloat b);
+void sleep_ms(int);
 void frameBufferSizeCallback(GLFWwindow *, int width, int height);
 
 template<class C>
@@ -102,7 +109,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         // Fixed framerate
         if (steps >= MAX_STEPS && !spf.tick())
-            Sleep(spf.left() * 1e3), spf.refresh();
+            sleep_ms(spf.left() * 1e3), spf.refresh();
 
         // Message handling
         if (input_type == IT_MESSAGE && msg_t.tick())
@@ -295,6 +302,18 @@ void updatePoly() {
 GLfloat rand(GLfloat a, GLfloat b) {
     std::uniform_real_distribution<GLfloat> dist(a, b);
     return dist(generator);
+}
+
+
+// Found at stackoverflow:
+// https://stackoverflow.com/questions/10918206/cross-platform-sleep-function-for-c
+void sleep_ms(int sleepMs) {
+#ifdef LINUX
+    usleep(sleepMs * 1000);   // usleep takes sleep time in us (1 millionth of a second)
+#endif
+#ifdef WINDOWS
+    Sleep(sleepMs);
+#endif
 }
 
 void frameBufferSizeCallback(GLFWwindow *window, int width, int height) {
