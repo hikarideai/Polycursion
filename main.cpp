@@ -65,11 +65,11 @@ enum InputType {
 int main() {
     // CORE INITIALIZATION
     glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, 0, 0);
-	if (!window) std::cerr << "Use ur FOKING GPU!!!\n";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, 0, 0);
+    if (!window) std::cerr << "Use ur FOKING GPU!!!\n";
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) std::cerr << "GLEW is dead\n";
