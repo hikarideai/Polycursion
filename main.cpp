@@ -48,10 +48,14 @@ double zoom = 1;
 double shx = 0, shy = 0;
 int drawn = 0;
 
-Timer save_t(2);
+Timer msg_t(2);
 int input_type;
 bool wait_input = false;
 string input_str;
+enum InputType {
+    IT_IDLE, IT_POLYSIDE, IT_MESSAGE, IT_MSTEPS
+};
+
 
 int main() {
     // CORE INITIALIZATION
@@ -95,23 +99,25 @@ int main() {
     glBindVertexArray(0);
 
     // APP CYCLE
-    Timer spf(1.0/60), fps_upd(1), ft;  // Frames management
+    Timer spf(1.0/60), fps_upd(1), ft;  // Frame management
     int frames = 0;
     while (!glfwWindowShouldClose(window)) {
+        // Fixed framerate
         if (steps >= MAX_STEPS && !spf.tick())
             Sleep(spf.left() * 1e3), spf.refresh();
 
-        if (input_type == 2 && save_t.tick())
-            input_type = 0;
+        // Message handling
+        if (input_type == IT_MESSAGE && msg_t.tick())
+            input_type = IT_IDLE;
 
         double dt = ft.elapsed();
         ft.refresh();
-
         handleHoldKeyEvents(dt);
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // PROGRESS
         if (steps < MAX_STEPS) {
             steps++;
             for (int i = 0; i < NGON - 1; i++) {
@@ -125,18 +131,19 @@ int main() {
             updatePoly();
         }
 
+        // DRAW
         glBindVertexArray(vao);
         use(&prg);
         prg.setFloat("zoom", zoom);
         prg.setFloat("shx", shx);
         prg.setFloat("shy", shy);
-
         for (int i = 0; i < min(MAX_STEPS, steps); i++) {
             glDrawArrays(GL_TRIANGLE_STRIP, i * NGON, NGON);
         }
         glBindVertexArray(0);
         use();
 
+        // FINISH OFF
         glfwPollEvents();
         glfwSwapBuffers(window);
 
@@ -147,19 +154,20 @@ int main() {
             drawn = frames, frames = 0;
     }
 
+    // -FATALITY-
     glfwTerminate();
     return 0;
 }
 
 void handleWindowTitle() {
     string title;
-    if (input_type == 0) {
+    if (input_type == IT_IDLE) {
         title = (string)WINDOW_TITLE + " " + to_string(100 * steps / MAX_STEPS) + "% [" + to_string(drawn) + "fps] | Zoom " + to_string(zoom, 2) + "x | " + to_string(NGON) + "-gon | Depth " + to_string(steps) + "/" + to_string(MAX_STEPS);
-    } else if (input_type == 1) {
+    } else if (input_type == IT_POLYSIDE) {
         title = "Generate " + input_str + "-gon";
-    } else if (input_type == 2) {
+    } else if (input_type == IT_MESSAGE) {
         title = input_str;
-    } else if (input_type == 3) {
+    } else if (input_type == IT_MSTEPS) {
         title = "No. steps to perform = " + input_str;
     }
     glfwSetWindowTitle(window, title.c_str());
@@ -193,15 +201,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
                 } else if (!input_str.empty() && key == GLFW_KEY_BACKSPACE) {
                     input_str.pop_back();
                 } else if (key == GLFW_KEY_ENTER) {
-                    if (input_type == 1 && !input_str.empty()) {
+                    if (input_type == IT_POLYSIDE && !input_str.empty()) {
                         NGON = stoi(input_str);
                         genPolygon(NGON);
                         steps = 1;
-                    } else if (input_type == 3 && !input_str.empty()) {
+                    } else if (input_type == IT_MSTEPS && !input_str.empty()) {
                         MAX_STEPS = stoi(input_str);
                     }
                     wait_input = false;
-                    input_type = 0;
+                    input_type = IT_IDLE;
                 }
         } else if (key == GLFW_KEY_C) {
             glm::vec3 clA(rand(0, 1), rand(0, 1), rand(0, 1)), clB(rand(0, 1), rand(0, 1), rand(0, 1));
@@ -216,7 +224,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
         } else if (key == GLFW_KEY_N) {
             input_str.clear();
             wait_input = true;
-            input_type = 1;
+            input_type = IT_POLYSIDE;
         } else if (key == GLFW_KEY_S) {
             time_t now = time(0);
             tm *date = localtime(&now);
@@ -233,11 +241,11 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
                 input_str = "Saved as " + filename;
             else
                 input_str = "Save failed: " + (string)lodepng_error_text(error);
-            input_type = 2;
-            save_t.refresh();
+            input_type = IT_MESSAGE;
+            msg_t.refresh();
         } else if (key == GLFW_KEY_M) {
             input_str.clear();
-            input_type = 3;
+            input_type = IT_MSTEPS;
             wait_input = true;
         }
     }
