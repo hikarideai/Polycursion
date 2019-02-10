@@ -4,7 +4,7 @@
 
 # Polycursion
 ### General
-Polycursion is a neat thingy, which can produce really beautiful patterns.
+Polycursion can produce really beautiful patterns!
 
 They are generated iteratively : first a base n-gon is generated, second algo picks
 a point on each side of a polygon and connects them together to create a new one,
