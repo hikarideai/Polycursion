@@ -35,3 +35,10 @@
 *.cbp
 *.layout
 *.depend
+
+# YCM symlink
+compile_commands.json
+
+# Build directories
+bin/
+build/
