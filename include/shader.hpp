@@ -1,7 +1,7 @@
 #ifndef SHADER_HPP
 #define SHADER_HPP
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <bits/stdc++.h>
 
 #include <fstream>
