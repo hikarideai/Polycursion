@@ -42,3 +42,5 @@ compile_commands.json
 # Build directories
 bin/
 build/
+.vs/
+out/

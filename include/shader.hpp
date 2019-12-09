@@ -2,7 +2,6 @@
 #define SHADER_HPP
 
 #include <glad/glad.h>
-#include <bits/stdc++.h>
 
 #include <fstream>
 #include <sstream>

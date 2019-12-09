@@ -2,15 +2,26 @@ cmake_minimum_required(VERSION 3.10)
 set(TARGET polycur)
 project(${TARGET})
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/glfw)
+
 include_directories(include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/glfw/include)
 set(SOURCES src/glad.c src/main.cpp src/shader.cpp src/lodepng.cpp)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS -O2)
 
-add_executable(${TARGET} ${SOURCES})
+configure_file(resources/vert ${CMAKE_BINARY_DIR}/vert COPYONLY)
+configure_file(resources/frag ${CMAKE_BINARY_DIR}/frag COPYONLY)
 
-target_link_libraries(${TARGET} GL GLU glfw3 X11 Xxf86vm Xrandr pthread Xi dl Xinerama Xcursor)
+add_executable(${TARGET} ${SOURCES})
+target_link_libraries(${TARGET} glfw ${GLFW_LIBRARIES})
+
+if (UNIX)
+	#target_link_libraries(${TARGET} )
+endif (UNIX)
+
+#target_link_libraries(${TARGET} GL GLU glfw3 X11 Xxf86vm Xrandr pthread Xi dl Xinerama Xcursor)
 
 
 

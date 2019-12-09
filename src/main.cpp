@@ -72,14 +72,19 @@ enum InputType {
 
 const char *msg = "You're cute >3";
 
+void errorCallback(int code, const char* msg) {
+    puts(msg);
+}
+
 int main() {
     // CORE INITIALIZATION
+    glfwSetErrorCallback(errorCallback);
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, 0, 0);
-    if (!window) std::cerr << "Your GPU doesn't support OpenGL 3.3 context! Abort.\n";
+    if (!window) puts("Your GPU doesn't support OpenGL 3.3 context! Abort.");
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
