@@ -22,5 +22,4 @@ It is important to remember that this procedure is not set in stone, e.g. I enco
 * To save a beautiful masterpiece to a file use S
 
 ### Dependencies
-This project uses GLEW and GLFW 3.3 to make OpenGL work and LodePNG to make screenshots. 
-In order to compile project you need to only build GLEW and GLFW 3.3.
+This project uses GLAD loader and GLFW 3.3 to make OpenGL work and LodePNG to make screenshots. 
