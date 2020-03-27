@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <random>
 #include <ctime>
+#include <algorithm>
 
 void handleWindowTitle();
 void handleHoldKeyEvents(double dt);
@@ -306,7 +307,7 @@ std::string to_string(double n, int d) {
                 out.push_back('.');
             a /= 10;
     }
-    reverse(out.begin(), out.end());
+    std::reverse(out.begin(), out.end());
     return out;
 }
 
