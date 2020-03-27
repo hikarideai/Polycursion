@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 set(TARGET polycur)
 project(${TARGET})
 
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_INSTALL OFF)
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/glfw)
 
 include_directories(include)
